@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  bio       String?
+  city      String?
+  lat       Float?
+  lng       Float?
+  onboarded Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+
+  interests    UserInterest[]
+  availability Availability[]
+  memberships  GroupMember[]
+
+  swipesGiven    Swipe[] @relation("SwipeFrom")
+  swipesReceived Swipe[] @relation("SwipeTo")
+  matchesAs1     Match[] @relation("MatchUser1")
+  matchesAs2     Match[] @relation("MatchUser2")
+
+  blocksGiven     Block[]  @relation("Blocker")
+  blocksReceived  Block[]  @relation("Blocked")
+  groupBlocksGiven GroupBlock[]
+  reportsFiled    Report[] @relation("Reporter")
+  reportsReceived Report[] @relation("ReportedUser")
+  joinRequests    GroupJoinRequest[]
+  messagesSent    Message[] @relation("MessageSender")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Interest {
+  id       String @id @default(cuid())
+  name     String @unique
+  category String
+
+  users  UserInterest[]
+  groups GroupInterest[]
+}
+
+model UserInterest {
+  userId     String
+  interestId String
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, interestId])
+}
+
+model Availability {
+  id     String @id @default(cuid())
+  userId String
+  day    Int
+  slot   String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, day, slot])
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  image       String?
+  city        String?
+  lat         Float?
+  lng         Float?
+  joinType    String   @default("OPEN") // OPEN | REQUEST
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members      GroupMember[]
+  interests    GroupInterest[]
+  joinRequests GroupJoinRequest[]
+
+  swipesGiven    GroupSwipe[] @relation("GroupSwipeFrom")
+  swipesReceived GroupSwipe[] @relation("GroupSwipeTo")
+  matchesAs1     GroupMatch[] @relation("GroupMatch1")
+  matchesAs2     GroupMatch[] @relation("GroupMatch2")
+  reports        Report[]     @relation("ReportedGroup")
+  blockedBy      GroupBlock[]
+}
+
+model GroupJoinRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+}
+
+model GroupMember {
+  userId  String
+  groupId String
+  role    String @default("MEMBER")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+}
+
+model GroupInterest {
+  groupId    String
+  interestId String
+
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, interestId])
+}
+
+model Swipe {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  direction  String
+  createdAt  DateTime @default(now())
+
+  fromUser User @relation("SwipeFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("SwipeTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+}
+
+model GroupSwipe {
+  id          String   @id @default(cuid())
+  fromGroupId String
+  toGroupId   String
+  direction   String
+  createdAt   DateTime @default(now())
+
+  fromGroup Group @relation("GroupSwipeFrom", fields: [fromGroupId], references: [id], onDelete: Cascade)
+  toGroup   Group @relation("GroupSwipeTo", fields: [toGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([fromGroupId, toGroupId])
+}
+
+model Match {
+  id        String   @id @default(cuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime @default(now())
+
+  user1 User @relation("MatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 User @relation("MatchUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@unique([user1Id, user2Id])
+}
+
+model GroupMatch {
+  id        String   @id @default(cuid())
+  group1Id  String
+  group2Id  String
+  createdAt DateTime @default(now())
+
+  group1   Group     @relation("GroupMatch1", fields: [group1Id], references: [id], onDelete: Cascade)
+  group2   Group     @relation("GroupMatch2", fields: [group2Id], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([group1Id, group2Id])
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  matchId      String
+  senderUserId String
+  content      String
+  createdAt    DateTime @default(now())
+
+  match  GroupMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender User       @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Cascade)
+}
+
+model Block {
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+}
+
+model GroupBlock {
+  userId    String
+  groupId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+}
+
+model Report {
+  id              String   @id @default(cuid())
+  reporterId      String
+  reportedUserId  String?
+  reportedGroupId String?
+  reason          String
+  createdAt       DateTime @default(now())
+
+  reporter      User   @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser  User?  @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reportedGroup Group? @relation("ReportedGroup", fields: [reportedGroupId], references: [id])
+}
