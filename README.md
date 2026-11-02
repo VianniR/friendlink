@@ -5,6 +5,12 @@
 
 FriendLink is a mobile-first web application that helps existing friend groups discover and connect with other compatible groups. Instead of matching individuals, FriendLink allows groups to discover each other through a swipe-based interface, form mutual matches, and coordinate meetups through shared conversations.
 
+<p align="center">
+  <img src="docs/images/friendlink3.jpg"
+       alt="FriendLink discovery interface"
+       width="350">
+</p>
+
 Built as an individual senior project at California Polytechnic State University, San Luis Obispo.
 
 **Tech Stack:** Next.js 16 · TypeScript · Prisma 6 · SQLite · NextAuth · Tailwind CSS · Framer Motion
@@ -53,6 +59,38 @@ The application was designed around three goals:
 - Membership-based authorization for chat access
 - User blocking and reporting functionality
 - City-level location information rather than precise coordinates
+
+## Screenshots
+
+### Onboarding
+Users complete their profiles by selecting interests, availability, and location.
+
+<p align="center">
+  <img src="docs/images/friendlink1.jpg"
+       alt="FriendLink discovery interface"
+       width="350">
+</p>
+
+
+### Group Management
+Users can create or join groups, view members, and manage membership.
+
+<p align="center">
+  <img src="docs/images/friendlink2.jpg"
+       alt="FriendLink discovery interface"
+       width="350">
+</p>
+
+
+### Group Discovery
+Groups are ranked by compatibility and presented in an interactive swipe interface.
+
+<p align="center">
+  <img src="docs/images/friendlink3.jpg"
+       alt="FriendLink discovery interface"
+       width="350">
+</p>
+
 
 ## Matching Algorithm
 
